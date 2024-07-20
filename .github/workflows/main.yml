@@ -41,7 +41,7 @@ jobs:
           git commit -m "Increment build version to ${{ steps.increment-version.outputs.build_version }}"
           git push
         env:
-          GITHUB_TOKEN: ${{ secrets.rect_secrets }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
