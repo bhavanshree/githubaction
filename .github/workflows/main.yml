@@ -9,17 +9,43 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      - name: docker login
+
+      - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Build and push
+
+      - name: Increment build version
+        id: increment-version
+        run: |
+          BUILD_VERSION=$(cat VERSION)
+          NEW_BUILD_VERSION=$((BUILD_VERSION + 1))
+          echo "New build version: $NEW_BUILD_VERSION"
+          echo $NEW_BUILD_VERSION > VERSION
+          echo "::set-output name=build_version::$NEW_BUILD_VERSION"
+
+      - name: Commit new build version
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add VERSION
+          git commit -m "Increment build version to ${{ steps.increment-version.outputs.build_version }}"
+          git push
+
+      - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
+          context: .
           push: true
-          tags: bk10d/githubaction:latest
+          tags: |
+            bk10d/githubaction:${{ steps.increment-version.outputs.build_version }}
+            bk10d/githubaction:latest
