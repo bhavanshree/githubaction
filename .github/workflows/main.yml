@@ -1,5 +1,5 @@
 name: Docker Image CI
- 
+
 on:
   push:
     branches:
@@ -27,10 +27,13 @@ jobs:
       - name: Increment build version
         id: increment-version
         run: |
-          BUILD_VERSION=$(cat VERSION)
+          VERSION_FILE="VERSION"
+          if [ ! -f "$VERSION_FILE" ]; then
+            echo "1" > "$VERSION_FILE"
+          fi
+          BUILD_VERSION=$(cat $VERSION_FILE)
           NEW_BUILD_VERSION=$((BUILD_VERSION + 1))
-          echo "New build version: $NEW_BUILD_VERSION"
-          echo $NEW_BUILD_VERSION > VERSION
+          echo $NEW_BUILD_VERSION > $VERSION_FILE
           echo "::set-output name=build_version::$NEW_BUILD_VERSION"
 
       - name: Commit new build version
@@ -49,4 +52,4 @@ jobs:
           context: .
           push: true
           tags: |
-            bk10d/githubaction:${{ steps.increment-version.outputs.build_version }}
+            bk10d/private:${{ steps.increment-version.outputs.build_version }}
